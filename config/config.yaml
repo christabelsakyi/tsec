@@ -1,0 +1,109 @@
+# Main configuration file for Energy Consumption Forecasting
+
+# Data settings
+data:
+  raw_data_path: "data/raw/AEP_hourly.csv"
+  processed_data_path: "data/processed/processed_energy_data.csv"
+  date_column: "Datetime"
+  target_column: "AEP_MW"
+  train_test_split_ratio: 0.8
+  resampling:
+    enabled: true
+    freq: "H"  # H for hourly, D for daily
+  raw_data_message: "You may need to download the dataset. You can find it at: https://www.kaggle.com/datasets/robikscube/hourly-energy-consumption"
+  process_data_message: "Run the preprocessing script first: python src/data/preprocessing.py"
+
+# Feature engineering settings
+features:
+  create_lag_features: true
+  lag_hours: [1, 2, 3, 24, 48, 168]  # 1h, 2h, 3h, 1d, 2d, 1w
+  add_time_features: true
+  time_features:
+    - "hour"
+    - "dayofweek"
+    - "month"
+    - "quarter"
+    - "is_weekend"
+
+# Model settings
+models:
+  selected_model: "arima"  # Options: "arima", "prophet", "lstm"
+  model_path: "models/saved"
+  debug_message: "Running in debug mode, a dummy model will be used."
+  train_instruction: "You need to train a model first: python src/models/train_model.py"
+
+  arima:
+    p: 3
+    d: 1
+    q: 3
+    seasonal_order:
+      p: 1
+      d: 1
+      q: 1
+      s: 24
+
+  prophet:
+    seasonality_mode: "multiplicative"
+    yearly_seasonality: true
+    weekly_seasonality: true
+    daily_seasonality: true
+    uncertainty_samples: 1000
+
+  lstm:
+    units: 50
+    dropout: 0.2
+    recurrent_dropout: 0.2
+    epochs: 50
+    batch_size: 32
+    sequence_length: 24
+    validation_split: 0.2
+
+# Training settings
+training:
+  random_state: 42
+  test_size: 0.2
+  shuffle: false
+  cross_validation:
+    enabled: true
+    n_splits: 5
+
+# Prediction settings
+prediction:
+  forecast_horizon: 24
+  confidence_interval: 0.95
+
+# API settings
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: true
+  allowed_origins: "*"
+  max_forecast_days: 30
+  production_servers:
+    - "waitress"
+    - "gunicorn"
+
+# Logging settings
+logging:
+  level: "INFO"
+  file: "logs/energy_forecast.log"
+  config_path: "config/logging_config.yaml"
+  start_message: "Starting Energy Consumption Forecasting Application"
+  flask_start_message: "Starting Flask API on {host}:{port}"
+  fallback_message: "No production WSGI server available. Using Flask development server."
+  dummy_data_creation_message: "Creating dummy processed data for development"
+
+# Directories to create
+directories:
+  required:
+    - data/raw
+    - data/processed
+    - logs
+    - models/saved
+
+# Dummy data generation settings
+dummy_data:
+  base: 300
+  daily_amplitude: 50
+  weekly_amplitude: 20
+  noise: 10
